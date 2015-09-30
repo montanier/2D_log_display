@@ -9,6 +9,8 @@ import sdl2.sdlgfx
 from sdl2 import rect, render
 from sdl2.ext.compat import isiterable
 
+import csv
+
 BLACK = sdl2.ext.Color(0, 0, 0)
 WHITE = sdl2.ext.Color(255, 255, 255)
 
@@ -57,7 +59,39 @@ class TextureRenderer(sdl2.ext.TextureSpriteRenderSystem):
                                     render.SDL_FLIP_NONE)
         render.SDL_RenderPresent(self.sdlrenderer)
 
-def main():
+class PointData(object):
+    def __init__(self):
+        super(PointData, self).__init__()
+        self.maxx = 0
+        self.maxy = 0
+        self.realX = 0.0
+        self.realy = 0.0
+        self.sprite = None
+        self.angle = 0.0
+
+class Point(sdl2.ext.Entity):
+    def __init__(self,world,idPoint,sprite,maxx,maxy,posx=0,posy=0):
+        super(Point, self).__init__()
+        self.sprite = sprite
+        self.sprite.position = posx, posy
+        self.sprite.angle = 0
+        self.pointdata = PointData()
+        self.pointdata.maxx = maxx
+        self.pointdata.maxy = maxy
+        self.pointdata.realX = posx
+        self.pointdata.realY = posy
+        self.pointdata.angle = 0
+        self.pointdata.idPoint = idPoint
+
+    def process(self,pointRecord):
+        print(str(self.pointdata.idPoint) + " " + str(pointRecord))
+        self.pointdata.realX = pointRecord["x"]
+        self.pointdata.realY = pointRecord["y"]
+        self.pointdata.angle = pointRecord["angle"]
+        self.sprite.position = int(self.pointdata.realX),int(self.pointdata.realY)
+        self.sprite.angle = self.pointdata.angle
+
+def main(log):
     sdl2.ext.init()
 
     RESOURCES = sdl2.ext.Resources(__file__, "resources")
@@ -73,20 +107,11 @@ def main():
 
     factory = sdl2.ext.SpriteFactory(sdl2.ext.TEXTURE, renderer=texture_renderer)
 
-    sprite1 = factory.from_image(RESOURCES.get_path("robot.png"))
-    sprite2 = factory.from_image(RESOURCES.get_path("robot.png"))
-    positionX = 100
-    positionY = 100
-    angle = 0
-    sprite1.position = 100, 100
-    sprite1.angle = 0.5
-    sprite2.position = 100, 100
-    sprite2.angle = 0.5
-    robots_sprites = []
-    robots_sprites.append(sprite1)
-    robots_sprites.append(sprite2)
+    points = []
+    points_sprites = []
 
     running = True
+    timeStep = 0
     while running:
         events = sdl2.ext.get_events()
         for event in events:
@@ -94,20 +119,65 @@ def main():
                 running = False
                 break
 
-        sdl2.SDL_Delay(10)
-        positionX+=1
-        positionY+=1
-        angle = angle+1
-        robots_sprites[0].position = positionX,positionY
-        robots_sprites[0].angle = angle
+        for record in log:
+            if record["timeStep"] == timeStep:
+                print record["timeStep"]
+                for pointRecord in record["points"]:
+                    pointFound = False
+                    for pointLoged in points:
+                        if pointRecord["pointId"] == pointLoged.pointdata.idPoint:
+                            pointFound = True
+                            pointLoged.process(pointRecord)
+                            break
+                    if pointFound == False:
+                        sprite = factory.from_image(RESOURCES.get_path("robot.png"))
+                        points.append(Point(world,pointRecord["pointId"],sprite,800,600,0,0))
+                        points_sprites.append(sprite)
+                        points[len(points)-1].process(pointRecord)
 
         texture_renderer.color= WHITE
         texture_renderer.clear()
-        spriterenderer.render(robots_sprites)
+        spriterenderer.render(points_sprites)
         world.process()
+
+        timeStep += 1
+        sdl2.SDL_Delay(100)
 
     sdl2.ext.quit()
 
 
 if __name__ == "__main__":
-    main()
+    fileReader = csv.reader(open("log.csv"))
+    headerInfo = fileReader.next()
+    header = []
+    log = []
+    for h in headerInfo:
+        header.append(h)
+    #TODO check assumptions on info present in the 
+    for row in fileReader:
+        timeStep = int(row[0])
+        pointId = int(row[1])
+        foundTimeStep = False
+        for record in log:
+            print record
+            if record["timeStep"] == timeStep:
+                pointInfo = {}
+                pointInfo["pointId"] = pointId
+                pointInfo["x"] = float(row[2])
+                pointInfo["y"] = float(row[3])
+                pointInfo["angle"] = float(row[4])
+                record["points"].append(pointInfo)
+                foundTimeStep = True
+                break
+        if foundTimeStep == False: 
+            newTimeStep = {}
+            newTimeStep["timeStep"] = timeStep
+            newTimeStep["points"] = []
+            pointInfo = {}
+            pointInfo["pointId"] = pointId
+            pointInfo["x"] = float(row[2])
+            pointInfo["y"] = float(row[3])
+            pointInfo["angle"] = float(row[4])
+            newTimeStep["points"].append(pointInfo)
+            log.append(newTimeStep)
+    main(log)
