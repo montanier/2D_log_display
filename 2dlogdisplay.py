@@ -84,7 +84,6 @@ class Point(sdl2.ext.Entity):
         self.pointdata.idPoint = idPoint
 
     def process(self,pointRecord):
-        print(str(self.pointdata.idPoint) + " " + str(pointRecord))
         self.pointdata.realX = pointRecord["x"]
         self.pointdata.realY = pointRecord["y"]
         self.pointdata.angle = pointRecord["angle"]
@@ -147,7 +146,8 @@ def main(log):
 
 
 if __name__ == "__main__":
-    fileReader = csv.reader(open("log.csv"))
+    #fileReader = csv.reader(open("log.csv"))
+    fileReader = csv.reader(open("trajectory_0"),delimiter=' ')
     headerInfo = fileReader.next()
     header = []
     log = []
@@ -159,13 +159,16 @@ if __name__ == "__main__":
         pointId = int(row[1])
         foundTimeStep = False
         for record in log:
-            print record
             if record["timeStep"] == timeStep:
                 pointInfo = {}
                 pointInfo["pointId"] = pointId
                 pointInfo["x"] = float(row[2])
                 pointInfo["y"] = float(row[3])
-                pointInfo["angle"] = float(row[4])
+                if row[4] != '':
+                    print("." + row[4] + ".")
+                    pointInfo["angle"] = float(row[4])
+                else:
+                    pointInfo["angle"] = 0
                 record["points"].append(pointInfo)
                 foundTimeStep = True
                 break
@@ -177,7 +180,11 @@ if __name__ == "__main__":
             pointInfo["pointId"] = pointId
             pointInfo["x"] = float(row[2])
             pointInfo["y"] = float(row[3])
-            pointInfo["angle"] = float(row[4])
+            if row[4] != '':
+                print("." + row[4] + ".")
+                pointInfo["angle"] = float(row[4])
+            else:
+                pointInfo["angle"] = 0
             newTimeStep["points"].append(pointInfo)
             log.append(newTimeStep)
     main(log)
