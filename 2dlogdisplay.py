@@ -114,10 +114,6 @@ def main(log):
     points_sprites = []
     text_sprites = []
 
-    image = factory.from_text("Test",fontmanager=fontManager)
-    image.position = 100,100
-    image.angle = 0
-    text_sprites.append(image)
 
     running = True
     timeStep = 0
@@ -142,6 +138,13 @@ def main(log):
                     sprite.position = int(pointRecord["x"]),int(pointRecord["y"])
                     sprite.angle = pointRecord["angle"]
                     points_sprites.append(sprite)
+
+                    if "information" in pointRecord:
+                        image = factory.from_text(pointRecord["information"],fontmanager=fontManager)
+                        image.position = int(pointRecord["x"])+15,int(pointRecord["y"])-15
+                        image.angle = 0
+                        text_sprites.append(image)
+
                     prevTimeStep = timeStep
 
         texture_renderer.color= WHITE
