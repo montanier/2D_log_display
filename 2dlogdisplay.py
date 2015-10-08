@@ -1,12 +1,13 @@
 #!/usr/bin/python
 
 import sys
+import os
 
 import sdl2
 import sdl2.ext
 import sdl2.sdlgfx
 
-from sdl2 import rect, render
+from sdl2 import *
 from sdl2.ext.compat import isiterable
 
 import csv
@@ -94,7 +95,9 @@ def main(log):
     sdl2.ext.init()
 
     RESOURCES = sdl2.ext.Resources(__file__, "resources")
-    window = sdl2.ext.Window("Hello World!", size=(640, 480))
+    fontpath = os.path.join(os.path.dirname(__file__), 'font', 'Glametrix.otf')
+
+    window = sdl2.ext.Window("2D Log Display", size=(640, 480))
     window.color = WHITE
     window.show()
 
@@ -105,9 +108,16 @@ def main(log):
     world.add_system(spriterenderer)
 
     factory = sdl2.ext.SpriteFactory(sdl2.ext.TEXTURE, renderer=texture_renderer)
+    fontManager = sdl2.ext.FontManager(fontpath,color=BLACK)
 
     points = []
     points_sprites = []
+    text_sprites = []
+
+    image = factory.from_text("Test",fontmanager=fontManager)
+    image.position = 100,100
+    image.angle = 0
+    text_sprites.append(image)
 
     running = True
     timeStep = 0
@@ -137,6 +147,7 @@ def main(log):
         texture_renderer.color= WHITE
         texture_renderer.clear()
         spriterenderer.render(points_sprites)
+        spriterenderer.render(text_sprites)
         world.process()
 
         timeStep += 1
@@ -146,18 +157,20 @@ def main(log):
 
 
 if __name__ == "__main__":
-    #fileReader = csv.reader(open("log.csv"))
-    fileReader = csv.reader(open("trajectory_0"),delimiter=' ')
+    #TODO use the options
+    fileReader = csv.reader(open("log.csv"),delimiter=',')
     headerInfo = fileReader.next()
     header = []
     log = []
     for h in headerInfo:
         header.append(h)
-    #TODO check assumptions on info present in the 
+
+    #TODO check assumptions on info present in the log
     for row in fileReader:
         timeStep = int(row[0])
         pointId = int(row[1])
         foundTimeStep = False
+
         for record in log:
             if record["timeStep"] == timeStep:
                 pointInfo = {}
@@ -172,6 +185,7 @@ if __name__ == "__main__":
                 record["points"].append(pointInfo)
                 foundTimeStep = True
                 break
+
         if foundTimeStep == False: 
             newTimeStep = {}
             newTimeStep["timeStep"] = timeStep
@@ -187,4 +201,5 @@ if __name__ == "__main__":
                 pointInfo["angle"] = 0
             newTimeStep["points"].append(pointInfo)
             log.append(newTimeStep)
+
     main(log)
