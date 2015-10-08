@@ -2,6 +2,7 @@
 
 import sys
 import os
+import math
 
 import sdl2
 import sdl2.ext
@@ -116,8 +117,14 @@ def main(log):
 
 
     running = True
-    timeStep = 0
-    prevTimeStep = 0
+    timeStep = -1
+    for record in log:
+        if timeStep == -1:
+            timeStep = record["timeStep"]
+        if record["timeStep"] < timeStep:
+            timeStep = record["timeStep"]
+
+    prevTimeStep = timeStep
     while running:
         events = sdl2.ext.get_events()
         for event in events:
@@ -154,14 +161,14 @@ def main(log):
         world.process()
 
         timeStep += 1
-        sdl2.SDL_Delay(50)
+        sdl2.SDL_Delay(200)
 
     sdl2.ext.quit()
 
 
 if __name__ == "__main__":
     #TODO use the options
-    fileReader = csv.reader(open("log.csv"),delimiter=',')
+    fileReader = csv.reader(open("log-morse-move.csv"),delimiter=',')
     headerInfo = fileReader.next()
     header = []
     log = []
@@ -171,17 +178,17 @@ if __name__ == "__main__":
     #TODO check assumptions on info present in the log
     for row in fileReader:
         timeStep = int(row[0])
-        pointId = int(row[1])
+        pointId = row[1]
         foundTimeStep = False
 
         for record in log:
             if record["timeStep"] == timeStep:
                 pointInfo = {}
                 pointInfo["pointId"] = pointId
-                pointInfo["x"] = float(row[2])
-                pointInfo["y"] = float(row[3])
+                pointInfo["x"] = float(row[2])*20.0
+                pointInfo["y"] = float(row[3])*20.0+100
                 if row[4] != '':
-                    pointInfo["angle"] = float(row[4])
+                    pointInfo["angle"] = float(row[4])*180/math.pi
                 else:
                     pointInfo["angle"] = 0
                 if (len(row) > 5) and (row[5] != ''):
@@ -196,10 +203,10 @@ if __name__ == "__main__":
             newTimeStep["points"] = []
             pointInfo = {}
             pointInfo["pointId"] = pointId
-            pointInfo["x"] = float(row[2])
-            pointInfo["y"] = float(row[3])
+            pointInfo["x"] = float(row[2])*20.0
+            pointInfo["y"] = float(row[3])*20.0+100
             if row[4] != '':
-                pointInfo["angle"] = float(row[4])
+                pointInfo["angle"] = float(row[4])*180/math.pi
             else:
                 pointInfo["angle"] = 0
             if (len(row) > 5) and (row[5] != ''):
