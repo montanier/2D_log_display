@@ -121,6 +121,7 @@ def main(log):
 
     running = True
     timeStep = 0
+    prevTimeStep = 0
     while running:
         events = sdl2.ext.get_events()
         for event in events:
@@ -130,19 +131,18 @@ def main(log):
 
         for record in log:
             if record["timeStep"] == timeStep:
-                print record["timeStep"]
+                if prevTimeStep < timeStep:
+                    texture_renderer.color= WHITE
+                    texture_renderer.clear()
+                    del points_sprites[:]
+                    del text_sprites[:]
+
                 for pointRecord in record["points"]:
-                    pointFound = False
-                    for pointLoged in points:
-                        if pointRecord["pointId"] == pointLoged.pointdata.idPoint:
-                            pointFound = True
-                            pointLoged.process(pointRecord)
-                            break
-                    if pointFound == False:
-                        sprite = factory.from_image(RESOURCES.get_path("robot.png"))
-                        points.append(Point(world,pointRecord["pointId"],sprite,800,600,0,0))
-                        points_sprites.append(sprite)
-                        points[len(points)-1].process(pointRecord)
+                    sprite = factory.from_image(RESOURCES.get_path("robot.png"))
+                    sprite.position = int(pointRecord["x"]),int(pointRecord["y"])
+                    sprite.angle = pointRecord["angle"]
+                    points_sprites.append(sprite)
+                    prevTimeStep = timeStep
 
         texture_renderer.color= WHITE
         texture_renderer.clear()
@@ -151,7 +151,7 @@ def main(log):
         world.process()
 
         timeStep += 1
-        sdl2.SDL_Delay(100)
+        sdl2.SDL_Delay(50)
 
     sdl2.ext.quit()
 
@@ -178,10 +178,11 @@ if __name__ == "__main__":
                 pointInfo["x"] = float(row[2])
                 pointInfo["y"] = float(row[3])
                 if row[4] != '':
-                    print("." + row[4] + ".")
                     pointInfo["angle"] = float(row[4])
                 else:
                     pointInfo["angle"] = 0
+                if (len(row) > 5) and (row[5] != ''):
+                    pointInfo["information"] = row[5]
                 record["points"].append(pointInfo)
                 foundTimeStep = True
                 break
@@ -195,10 +196,11 @@ if __name__ == "__main__":
             pointInfo["x"] = float(row[2])
             pointInfo["y"] = float(row[3])
             if row[4] != '':
-                print("." + row[4] + ".")
                 pointInfo["angle"] = float(row[4])
             else:
                 pointInfo["angle"] = 0
+            if (len(row) > 5) and (row[5] != ''):
+                pointInfo["information"] = row[5]
             newTimeStep["points"].append(pointInfo)
             log.append(newTimeStep)
 
