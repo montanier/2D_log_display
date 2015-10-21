@@ -12,6 +12,7 @@ from sdl2 import *
 from sdl2.ext.compat import isiterable
 
 import csv
+import argparse
 
 BLACK = sdl2.ext.Color(0, 0, 0)
 WHITE = sdl2.ext.Color(255, 255, 255)
@@ -92,7 +93,7 @@ class Point(sdl2.ext.Entity):
         self.sprite.position = int(self.pointdata.realX),int(self.pointdata.realY)
         self.sprite.angle = self.pointdata.angle
 
-def main(log):
+def main(log,dispId):
     sdl2.ext.init()
 
     RESOURCES = sdl2.ext.Resources(__file__, "resources")
@@ -146,8 +147,16 @@ def main(log):
                     sprite.angle = pointRecord["angle"]
                     points_sprites.append(sprite)
 
+                    text = ""
+
+                    if dispId == True:
+                        text = str(pointRecord["pointId"])
+
                     if "information" in pointRecord:
-                        image = factory.from_text(pointRecord["information"],fontmanager=fontManager)
+                        text = text + " " + str(pointRecord["information"])
+
+                    if text != "":
+                        image = factory.from_text(text,fontmanager=fontManager)
                         image.position = int(pointRecord["x"])+15,int(pointRecord["y"])-15
                         image.angle = 0
                         text_sprites.append(image)
@@ -161,14 +170,37 @@ def main(log):
         world.process()
 
         timeStep += 1
-        sdl2.SDL_Delay(200)
+        sdl2.SDL_Delay(500)
 
     sdl2.ext.quit()
 
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('inputFile', metavar='FILE', type=str, nargs=1,
+                       help='input file to analyze')
+    #parser.add_argument('--sum', dest='accumulate', action='store_const',
+    #                   const=sum, default=max,
+    #                   help='sum the integers (default: find the max)')
+
+    args = parser.parse_args()
+
+    minXRecord = -20
+    maxXRecord = 20
+    minYRecord = -20
+    maxYRecord = 20
+
+    widthWindow = 640
+    marginWidth = 30
+    heightWindow = 480
+    marginHeight = 20
+
+    widthDisp = widthWindow - (2*marginWidth)
+    heightDisp = heightWindow - (2*marginHeight)
+
     #TODO use the options
-    fileReader = csv.reader(open("log-morse-move.csv"),delimiter=',')
+    fileReader = csv.reader(open(args.inputFile[0]),delimiter=',')
     headerInfo = fileReader.next()
     header = []
     log = []
@@ -185,8 +217,10 @@ if __name__ == "__main__":
             if record["timeStep"] == timeStep:
                 pointInfo = {}
                 pointInfo["pointId"] = pointId
-                pointInfo["x"] = float(row[2])*20.0
-                pointInfo["y"] = float(row[3])*20.0+100
+                pointInfo["x"] = (float(row[2])-minXRecord)*(widthDisp/(maxXRecord-minXRecord))
+                pointInfo["x"] += marginWidth
+                pointInfo["y"] = (float(row[3])-minYRecord)*(heightDisp/(maxYRecord-minYRecord))
+                pointInfo["y"] += marginHeight
                 if row[4] != '':
                     pointInfo["angle"] = float(row[4])*180/math.pi
                 else:
@@ -203,8 +237,10 @@ if __name__ == "__main__":
             newTimeStep["points"] = []
             pointInfo = {}
             pointInfo["pointId"] = pointId
-            pointInfo["x"] = float(row[2])*20.0
-            pointInfo["y"] = float(row[3])*20.0+100
+            pointInfo["x"] = (float(row[2])-minXRecord)*(widthDisp/(maxXRecord-minXRecord))
+            pointInfo["x"] += marginWidth
+            pointInfo["y"] = heightDisp-((float(row[3])-minYRecord)*(heightDisp/(maxYRecord-minYRecord)))
+            pointInfo["y"] += marginHeight
             if row[4] != '':
                 pointInfo["angle"] = float(row[4])*180/math.pi
             else:
@@ -214,4 +250,4 @@ if __name__ == "__main__":
             newTimeStep["points"].append(pointInfo)
             log.append(newTimeStep)
 
-    main(log)
+    main(log,False)
