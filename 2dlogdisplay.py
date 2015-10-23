@@ -170,7 +170,7 @@ def main(log,dispId):
         world.process()
 
         timeStep += 1
-        sdl2.SDL_Delay(500)
+        sdl2.SDL_Delay(200)
 
     sdl2.ext.quit()
 
@@ -186,10 +186,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    minXRecord = -20
-    maxXRecord = 20
-    minYRecord = -20
-    maxYRecord = 20
+    minXRecord = 0
+    maxXRecord = 10
+    minYRecord = 0
+    maxYRecord = 10
 
     widthWindow = 640
     marginWidth = 30
@@ -221,11 +221,14 @@ if __name__ == "__main__":
                 pointInfo["x"] += marginWidth
                 pointInfo["y"] = (float(row[3])-minYRecord)*(heightDisp/(maxYRecord-minYRecord))
                 pointInfo["y"] += marginHeight
-                if row[4] != '':
-                    pointInfo["angle"] = float(row[4])*180/math.pi
+                if len(row) >= 5:
+                    if row[4] != '':
+                        pointInfo["angle"] = float(row[4])*180/math.pi
+                    else:
+                        pointInfo["angle"] = 0
                 else:
                     pointInfo["angle"] = 0
-                if (len(row) > 5) and (row[5] != ''):
+                if (len(row) > 6) and (row[5] != ''):
                     pointInfo["information"] = row[5]
                 record["points"].append(pointInfo)
                 foundTimeStep = True
@@ -241,8 +244,11 @@ if __name__ == "__main__":
             pointInfo["x"] += marginWidth
             pointInfo["y"] = heightDisp-((float(row[3])-minYRecord)*(heightDisp/(maxYRecord-minYRecord)))
             pointInfo["y"] += marginHeight
-            if row[4] != '':
-                pointInfo["angle"] = float(row[4])*180/math.pi
+            if len(row) >= 5:
+                if row[4] != '':
+                    pointInfo["angle"] = float(row[4])*180/math.pi
+                else:
+                    pointInfo["angle"] = 0
             else:
                 pointInfo["angle"] = 0
             if (len(row) > 5) and (row[5] != ''):
