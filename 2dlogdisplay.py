@@ -187,8 +187,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     minXRecord = 0
-    maxXRecord = 10
-    minYRecord = 0
+    maxXRecord = 20
+    minYRecord = -20
     maxYRecord = 10
 
     widthWindow = 640
@@ -228,7 +228,7 @@ if __name__ == "__main__":
                         pointInfo["angle"] = 0
                 else:
                     pointInfo["angle"] = 0
-                if (len(row) > 6) and (row[5] != ''):
+                if (len(row) > 5) and (row[5] != ''):
                     pointInfo["information"] = row[5]
                 record["points"].append(pointInfo)
                 foundTimeStep = True
